@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construction Engineer Chatbot</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .chat-container {
+            height: calc(100vh - 250px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-600">Construction Engineer Chatbot</h1>
+            <div class="w-16 h-16 bg-gray-300 rounded-full">
+                <!-- Add your logo here -->
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div id="chat-messages" class="chat-container overflow-y-auto mb-4"></div>
+            <div class="flex flex-col space-y-4">
+                <div class="flex space-x-4">
+                    <select id="query-type" class="flex-grow border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="chat">General Chat</option>
+                        <option value="hvac">HVAC</option>
+                        <option value="plumbing">Plumbing</option>
+                        <option value="drainage">Drainage</option>
+                        <option value="fire-protection">Fire Protection</option>
+                    </select>
+                    <button id="clear-chat" class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500">Clear Chat</button>
+                </div>
+                <div class="flex space-x-4">
+                    <input type="text" id="user-input" class="flex-grow border rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ask a question...">
+                    <button id="send-button" class="bg-blue-500 text-white px-6 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.24.0/axios.min.js"></script>
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const queryType = document.getElementById('query-type');
+        const clearChatButton = document.getElementById('clear-chat');
+
+        function addMessage(content, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-4 ${isUser ? 'text-right' : ''}`;
+            messageDiv.innerHTML = `
+                <div class="inline-block bg-${isUser ? 'blue-500 text-white' : 'gray-200'} rounded-lg px-4 py-2 max-w-3/4">
+                    ${content}
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            const type = queryType.value;
+            if (message) {
+                addMessage(message, true);
+                userInput.value = '';
+
+                try {
+                    let response;
+                    switch (type) {
+                        case 'hvac':
+                            response = await axios.post('/api/hvac', { input: message });
+                            break;
+                        case 'plumbing':
+                            response = await axios.post('/api/plumbing', { input: message });
+                            break;
+                        case 'drainage':
+                            response = await axios.post('/api/drainage', { input: message });
+                            break;
+                        case 'fire-protection':
+                            response = await axios.post('/api/fire-protection', { input: message });
+                            break;
+                        default:
+                            response = await axios.post('/api/chat', { input: message });
+                    }
+                    addMessage(response.data.response, false);
+                } catch (error) {
+                    console.error('Error:', error);
+                    addMessage('An error occurred while processing your request.', false);
+                }
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        clearChatButton.addEventListener('click', () => {
+            chatMessages.innerHTML = '';
+        });
+    </script>
+</body>
+</html>
